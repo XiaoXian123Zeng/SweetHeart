@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一份专属心意</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            /* ====== 专属背景图设置 ====== */
+            /* 引入了你的 bg.png 图片，并盖了一层极淡的柔粉色半透明蒙版，保证文字清晰 */
+            background: linear-gradient(rgba(255, 240, 245, 0.4), rgba(255, 240, 245, 0.4)), url('bg.png') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            touch-action: none;
+        }
+
+        /* ====== 背景猫咪主题图标雨：🐱💖⭐🐾 ====== */
+        .bg-decor {
+            position: absolute;
+            font-size: 26px; 
+            color: rgba(255, 215, 0, 0.6); 
+            user-select: none;
+            pointer-events: none;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-50px) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* 关心语卡片样式 (初始空白隐藏) */
+        .card {
+            position: absolute;
+            padding: 10px 18px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            font-weight: bold;
+            font-size: 14px;
+            color: #555;
+            user-select: none;
+            cursor: pointer;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            z-index: 10;
+        }
+
+        /* 底部毛玻璃控制栏 */
+        .control-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 15px 25px;
+            border-radius: 30px;
+            box-shadow: 0 8px 32px rgba(255, 105, 180, 0.3);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.8);
+            z-index: 100;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 90%;
+            max-width: 650px;
+            transition: opacity 0.5s ease;
+        }
+
+        button {
+            background: rgba(255,255,255,0.9);
+            border: none;
+            padding: 10px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #FF1493; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s, background 0.2s;
+            font-size: 14px;
+        }
+
+        button:hover { transform: translateY(-2px); background: #fff; }
+
+        input {
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 1px solid #FFCCD5;
+            outline: none;
+            font-size: 14px;
+            width: 140px;
+            background: rgba(255,255,255,0.8);
+            color: #FF1493;
+        }
+        input::placeholder { color: #FFAEBB; }
+
+        /* ====== 专属表白：信件模式 ====== */
+        #specialOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(255, 182, 198, 0.85); /* 遮罩层加深粉色 */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 200;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease;
+        }
+
+        .letter-box {
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px 40px 80px 40px; 
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(255, 105, 180, 0.4);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            max-width: 85%;
+            width: 480px;
+            text-align: left; 
+        }
+
+        .letter-to {
+            font-size: 22px;
+            font-weight: bold;
+            color: #FF1493;
+            margin-bottom: 20px;
+            border-bottom: 2px dashed #FFE6EA;
+            padding-bottom: 10px;
+        }
+
+        .special-text {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 15px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 1s ease, transform 1s ease;
+            text-indent: 2em; 
+        }
+
+        .special-text.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .close-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(255, 105, 163, 0.4);
+        }
+
+        /* 手机端适配 */
+        @media (max-width: 600px) {
+            .bg-decor { font-size: 20px; }
+            .card { font-size: 12px; padding: 8px 12px; }
+            .letter-box { width: 85%; padding: 30px 20px 70px 20px; }
+            .special-text { font-size: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="bgContainer"></div>
+
+    <div id="specialOverlay">
+        <div class="letter-box">
+            <div class="letter-to">To: HTT，</div>
+            <div id="text1" class="special-text">欢迎来到自由的大世界！大一的生活或许充满新奇，偶尔也会让人感到迷茫和辛苦，这些都再正常不过啦。</div>
+            <div id="text2" class="special-text">愿你在这里不仅能收获满意的成绩，更能找到真正的热爱。去勇敢试错，去慢慢长大，去认识一群合拍的朋友。</div>
+            <div id="text3" class="special-text">就算偶尔遇到小烦恼，睡一觉也就烟消云散啦。别给自己太大压力，允许自己偶尔偷个懒，周末记得去吹吹晚风。</div>
+            <div id="text4" class="special-text">愿你的大学生活像这满屏的星星一样闪闪发光，每天都要开心喔！好好爱自己！</div>
+            <button class="close-btn" onclick="closeSpecial()">✨ 返回主页</button>
+        </div>
+    </div>
+
+    <div class="control-bar" id="controlBar">
+        <button onclick="modeMeteor()">💫 流星雨</button>
+        <button onclick="modeHeart()">💖 画个圈圈</button>
+        <button onclick="modeLantern()">🏮 缓缓升空</button>
+        <button onclick="togglePause()" id="pauseBtn">⏸️ 木头人</button>
+        <input type="text" id="nameInput" placeholder="输入你的名字..." oninput="checkName()">
+    </div>
+
+    <audio id="bgMusic" src="bgm.mp3" loop></audio>
+
+    <script>
+        const words = ["多喝温热水哦", "今天按时吃饭了吗", "早点休息别熬夜", "记得吃水果呀", "天冷多穿衣", "今天也要开心", "注意眼睛休息", "伸个大大的懒腰吧", "记得保持微笑", "早八不迟到！", "高数逢考必过！", "去吃顿好的犒劳自己", "周末去逛逛街", "图书馆的阳光很好", "你已经做得很棒啦", "允许自己偶尔偷个懒", "把烦心事丢进垃圾桶", "深呼吸，放松一下", "今天也要元气满满", "风大记得戴帽子", "买杯奶茶奖励自己", "照顧好自己！"];
+        const colors = ['#FFB3BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#E8Baff', '#FFCCE6', '#D4F0F0'];
+        const cards = [];
+        const numCards = 80;
+        let isPaused = false;
+        let animInterval;
+        let currentMode = '';
+        let audioStarted = false;
+        let specialIconInterval;
+        let easterEggTimeout; 
+
+        // ====== 声音系统控制 ======
+        const bgmDom = document.getElementById('bgMusic');
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTone(freq, type, duration, vol=0.6) { 
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.value = freq;
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start();
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playClickSound() {
+            playTone(1800, 'sine', 0.05, 0.15); 
+        }
+
+        function startAudio() {
+            if (!audioStarted) {
+                bgmDom.volume = 0.6; 
+                bgmDom.play().catch(()=>{});
+                audioStarted = true;
+                document.body.removeEventListener('click', startAudio);
+            }
+        }
+
+        // ====== 初始化猫咪主题图标背景 ======
+        function initBackgroundDecorations() {
+            const icons = ['🐱', '💖', '⭐', '🐾'];
+            const iconColors = ['rgba(255, 105, 180, 0.6)', 'rgba(255, 215, 0, 0.6)']; 
+            const bgContainer = document.getElementById('bgContainer');
+            
+            for(let i=0; i<25; i++) {
+                createDecor(bgContainer, icons, iconColors);
+            }
+            setInterval(() => createDecor(bgContainer, icons, iconColors), 1500);
+        }
+
+        function createDecor(container, icons, iconColors) {
+            let decor = document.createElement('div');
+            decor.className = 'bg-decor';
+            decor.innerText = icons[Math.floor(Math.random() * icons.length)];
+            decor.style.color = iconColors[Math.floor(Math.random() * iconColors.length)];
+            decor.style.left = Math.random() * window.innerWidth + 'px';
+            decor.style.animationDuration = (Math.random() * 5 + 10) + 's'; 
+            container.appendChild(decor);
+            setTimeout(() => decor.remove(), 15000);
+        }
+
+        function initCards() {
+            for (let i = 0; i < numCards; i++) {
+                let card = document.createElement('div');
+                card.className = 'card';
+                card.innerText = words[Math.floor(Math.random() * words.length)];
+                card.style.background = colors[Math.floor(Math.random() * colors.length)];
+                card.onclick = function() {
+                    playTone(600, 'sine', 0.2, 0.3); 
+                    this.style.transform += ' scale(0)';
+                    setTimeout(() => { this.style.opacity = '0'; }, 300);
+                };
+                document.body.appendChild(card);
+                cards.push(card);
+            }
+        }
+
+        function modeMeteor() {
+            startAudio(); playClickSound();
+            currentMode = 'meteor';
+            clearInterval(animInterval);
+            clearTimeout(easterEggTimeout);
+            
+            cards.forEach(card => {
+                card.style.transition = 'none'; 
+                card.style.opacity = '1';
+                card.x = window.innerWidth + Math.random() * 800;
+                card.y = -200 - Math.random() * 800;
+                card.speed = Math.random() * 1.5 + 1.2; 
+                card.style.transform = `translate(-50%, -50%) rotate(-10deg)`; 
+            });
+
+            animInterval = setInterval(() => {
+                if(isPaused) return;
+                if(Math.random() < 0.02) playTone(1500, 'triangle', 0.05, 0.15); 
+                cards.forEach(card => {
+                    card.x -= card.speed * 1.5; 
+                    card.y += card.speed;
+                    if(card.x < -200 || card.y > window.innerHeight + 200) {
+                        card.x = window.innerWidth + 100 + Math.random() * 500;
+                        card.y = -100 - Math.random() * 500;
+                    }
+                    card.style.left = card.x + 'px';
+                    card.style.top = card.y + 'px';
+                });
+            }, 20);
+        }
+
+        function modeHeart() {
+            startAudio(); playClickSound();
+            currentMode = 'heart';
+            clearInterval(animInterval);
+            clearTimeout(easterEggTimeout);
+            
+            let scale = window.innerWidth < 600 ? 10 : 18; 
+            let cx = window.innerWidth / 2;
+            let cy = window.innerHeight / 2 - 50;
+
+            cards.forEach(card => {
+                card.style.transition = 'none'; 
+                card.style.opacity = '0';
+                card.style.transform = 'translate(-50%, -50%) scale(0)';
+            });
+
+            cards.forEach((card, i) => {
+                setTimeout(() => {
+                    if(isPaused) return;
+                    card.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; 
+                    card.style.opacity = '1';
+                    card.style.transform = `translate(-50%, -50%) scale(1) rotate(0deg)`;
+                    
+                    let t = (i / numCards) * Math.PI * 2;
+                    let x = 16 * Math.pow(Math.sin(t), 3);
+                    let y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                    card.style.left = (cx + x * scale) + 'px';
+                    card.style.top = (cy + y * scale) + 'px';
+                    
+                    if(i % 4 === 0) playTone(800 + i*6, 'sine', 0.05, 0.45); 
+                }, i * 15); 
+            });
+        }
+
+        function modeLantern() {
+            startAudio(); playClickSound();
+            currentMode = 'lantern';
+            clearInterval(animInterval);
+            clearTimeout(easterEggTimeout);
+            
+            let time = 0;
+            cards.forEach(card => {
+                card.style.transition = 'none';
+                card.style.opacity = '1';
+                card.style.transform = `translate(-50%, -50%) scale(1) rotate(0deg)`;
+                card.x = Math.random() * window.innerWidth;
+                card.y = window.innerHeight + Math.random() * 800 + 100; 
+                card.speedY = Math.random() * 1.5 + 0.8; 
+                card.offset = Math.random() * Math.PI * 2; 
+            });
+
+            animInterval = setInterval(() => {
+                if(isPaused) return;
+                time += 0.02;
+                if(Math.random() < 0.01) playTone(900, 'triangle', 0.1, 0.24); 
+                cards.forEach(card => {
+                    card.y -= card.speedY; 
+                    let currentX = card.x + Math.sin(time + card.offset) * 25; 
+                    
+                    if(card.y < -100) {
+                        card.y = window.innerHeight + 100;
+                        card.x = Math.random() * window.innerWidth;
+                    }
+                    card.style.left = currentX + 'px';
+                    card.style.top = card.y + 'px';
+                });
+            }, 20);
+        }
+
+        function togglePause() {
+            startAudio(); playClickSound();
+            isPaused = !isPaused;
+            const btn = document.getElementById('pauseBtn');
+            if (isPaused) {
+                btn.innerText = "▶️ 继续动";
+                clearTimeout(easterEggTimeout); 
+            } else {
+                btn.innerText = "⏸️ 木头人";
+                triggerAutoMagicShow(); 
+            }
+        }
+
+        function triggerAutoMagicShow() {
+            let prevMode = currentMode;
+            currentMode = 'magicShow';
+            clearInterval(animInterval); 
+            
+            const sequence = ['circle', 'grid', 'smile', 'wave'];
+            let step = 0;
+
+            function nextShape() {
+                if(isPaused) return; 
+
+                if(step >= sequence.length) {
+                    if(prevMode === 'meteor') modeMeteor();
+                    else if(prevMode === 'heart') modeHeart();
+                    else if(prevMode === 'lantern') modeLantern();
+                    return;
+                }
+
+                let shape = sequence[step];
+                playTone(1000 + step*100, 'square', 0.3, 0.45); 
+                
+                let cx = window.innerWidth / 2;
+                let cy = window.innerHeight / 2 - 50;
+
+                cards.forEach((card, i) => {
+                    card.style.transition = 'all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    card.style.transform = `translate(-50%, -50%) scale(1) rotate(0deg)`;
+                    
+                    if(shape === 'circle') { 
+                        let angle = (i / numCards) * Math.PI * 2;
+                        let r = Math.min(cx, cy) * 0.8;
+                        card.style.left = (cx + Math.cos(angle)*r) + 'px';
+                        card.style.top = (cy + Math.sin(angle)*r) + 'px';
+                    } else if(shape === 'grid') { 
+                        let cols = Math.ceil(Math.sqrt(numCards));
+                        let spacingX = Math.min(window.innerWidth/cols, 120);
+                        let spacingY = 40;
+                        card.style.left = (cx - (cols*spacingX)/2 + (i%cols)*spacingX + spacingX/2) + 'px';
+                        card.style.top = (cy - (cols*spacingY)/2 + Math.floor(i/cols)*spacingY) + 'px';
+                    } else if(shape === 'smile') { 
+                        if(i < 12) { card.style.left = cx - 100 + 'px'; card.style.top = cy - 80 + 'px'; } 
+                        else if(i < 24) { card.style.left = cx + 100 + 'px'; card.style.top = cy - 80 + 'px'; } 
+                        else { 
+                            let t = ((i - 24) / (numCards - 24)) - 0.5;
+                            card.style.left = (cx + t * 400) + 'px';
+                            card.style.top = (cy + (t * 400 * t * 400 * 0.0015) + 50) + 'px';
+                        }
+                    } else if(shape === 'wave') { 
+                        let x = (i / numCards) * window.innerWidth;
+                        card.style.left = x + 'px';
+                        card.style.top = (cy + Math.sin(x * 0.01) * 120) + 'px';
+                    }
+                });
+
+                step++;
+                easterEggTimeout = setTimeout(nextShape, 1800); 
+            }
+            
+            nextShape();
+        }
+
+        function checkName() {
+            startAudio(); 
+            const val = document.getElementById('nameInput').value.trim();
+            if (val.includes("侯甜甜")) { 
+                
+                bgmDom.volume = 0.2; 
+                playTone(1200, 'sine', 1.5, 1.2); 
+                
+                document.getElementById('controlBar').style.opacity = '0';
+                document.getElementById('controlBar').style.pointerEvents = 'none';
+                cards.forEach(c => c.style.opacity = '0');
+                
+                const overlay = document.getElementById('specialOverlay');
+                overlay.style.pointerEvents = 'auto';
+                overlay.style.opacity = '1';
+                
+                const texts = [document.getElementById('text1'), document.getElementById('text2'), 
+                               document.getElementById('text3'), document.getElementById('text4')];
+                texts.forEach(t => t.classList.remove('show')); 
+                
+                let idx = 0;
+                function showNext() {
+                    if (idx < texts.length) {
+                        texts[idx].classList.add('show');
+                        idx++;
+                        setTimeout(showNext, 2500); 
+                    }
+                }
+                setTimeout(showNext, 800);
+            }
+        }
+
+        function closeSpecial() {
+            playClickSound(); 
+            
+            bgmDom.volume = 0.6;
+            
+            document.getElementById('specialOverlay').style.opacity = '0';
+            document.getElementById('specialOverlay').style.pointerEvents = 'none';
+            document.getElementById('nameInput').value = '';
+            
+            setTimeout(() => {
+                document.getElementById('controlBar').style.opacity = '1';
+                document.getElementById('controlBar').style.pointerEvents = 'auto';
+                modeLantern(); 
+            }, 1000);
+        }
+
+        window.onload = () => {
+            initBackgroundDecorations(); 
+            initCards();
+            document.body.addEventListener('click', startAudio, { once: true });
+        };
+    </script>
+</body>
+</html>
